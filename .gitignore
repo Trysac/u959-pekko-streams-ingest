@@ -1,0 +1,17 @@
+# Build output and sbt, Metals and Bloop caches
+target/
+/.bsp/
+/.bloop/
+/.metals/
+/project/project/
+/project/metals.sbt
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# Local environment
+.env
+.env.*
+!.env.example

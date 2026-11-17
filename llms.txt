@@ -1,0 +1,16 @@
+# pekko-streams-ingest
+
+> Line-oriented file ingestion on Pekko Streams with backpressure from a slow sink, byte-bounded batches, a dead-letter channel and resumable offset checkpoints Scala library `io.github.trysac:pekko-streams-ingest`, package
+> `io.github.trysac.pekko_streams_ingest`, MIT licensed, Scala 3 on Java >= 21, standard library only.
+
+## Docs
+
+- [README](README.md): problem, install, usage example
+- [AGENTS](AGENTS.md): commands, folder map, conventions, limits
+- [Architecture](docs/ARCHITECTURE.md): shape of the library and its public API
+- [Testing](docs/TESTING.md): how to run and extend the tests
+
+## Optional
+
+- [Stack](docs/STACK.md): tools used and discarded
+- [Changelog](CHANGELOG.md): release history

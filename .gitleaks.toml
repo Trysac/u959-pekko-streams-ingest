@@ -1,0 +1,14 @@
+# gitleaks configuration: default rules plus local-only paths that are never committed.
+title = "pekko-streams-ingest gitleaks config"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Local tool output (ignored by git)"
+paths = [
+  '''(^|/)target/''',
+  '''(^|/)\.bsp/''',
+  '''(^|/)\.bloop/''',
+  '''(^|/)\.metals/''',
+]

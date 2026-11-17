@@ -1,0 +1,1 @@
+{"lang": "scala", "package": "io.github.trysac:pekko-streams-ingest", "commands": {"install": [["sbt", "--batch", "update"]], "check": [["java", "scripts/Check.java"]]}}

@@ -1,0 +1,60 @@
+# Semgrep CE rules owned by the factory (MIT, like this repository). The semgrep gate in scripts/Check.java runs
+# only this file; Semgrep-maintained registry rules are never used (their license forbids distribution and
+# service use). Every rule is ERROR: a match fails the gate. Factory-owned file: agents must not edit it.
+rules:
+  - id: fabrica.scala.exec-through-shell
+    languages: [scala]
+    severity: ERROR
+    message: Running a command through a shell (sh -c, bash -c, cmd /c), a command line built from a string, or Runtime.exec allows command injection. Start the program with scala.sys.process.Process(Seq(program, arg, ...)) and pass each argument separately.
+    pattern-either:
+      - pattern: Seq("sh", "-c", ...)
+      - pattern: Seq("bash", "-c", ...)
+      - pattern: Seq("/bin/sh", "-c", ...)
+      - pattern: Seq("cmd", "/c", ...)
+      - pattern: Seq("cmd.exe", "/c", ...)
+      - pattern: Seq("powershell", ...)
+      - pattern: new ProcessBuilder("sh", "-c", ...)
+      - pattern: new ProcessBuilder("bash", "-c", ...)
+      - pattern: new ProcessBuilder("cmd", "/c", ...)
+      - pattern: Runtime.getRuntime().exec(...)
+      - pattern: Runtime.getRuntime.exec(...)
+      - pattern: Process($A + $B)
+      - pattern: ($A + $B).!
+      - pattern: ($A + $B).!!
+      - pattern: s"...".!
+      - pattern: s"...".!!
+      - pattern: Process(s"...")
+  - id: fabrica.scala.unsafe-deserialization
+    languages: [scala]
+    severity: ERROR
+    message: ObjectInputStream.readObject deserializes arbitrary classes, so untrusted bytes can run code. Parse an explicit format (JSON, a case class of primitives) instead.
+    pattern-either:
+      - pattern: new ObjectInputStream(...)
+      - pattern: new java.io.ObjectInputStream(...)
+  - id: fabrica.scala.tls-verification-disabled
+    languages: [scala]
+    severity: ERROR
+    message: TLS certificate or host name verification is disabled (a trust-all X509TrustManager or a HostnameVerifier that accepts every host), so any server can impersonate the real one.
+    pattern-either:
+      - pattern-regex: def\s+checkServerTrusted\([^)]*\)\s*(?::\s*Unit\s*)?=\s*(?:\(\)|\{\s*\})
+      - pattern-regex: \.?setHostnameVerifier\(\s*\([^)]*\)\s*=>\s*true\s*\)
+      - pattern-regex: HttpsURLConnection\.setDefaultHostnameVerifier\(\s*\([^)]*\)\s*=>\s*true\s*\)
+  - id: fabrica.scala.script-engine-eval
+    languages: [scala]
+    severity: ERROR
+    message: ScriptEngine.eval (or a reflection ToolBox) runs a string as code. Interpret the input explicitly instead.
+    pattern-either:
+      - pattern: new ScriptEngineManager().getEngineByName(...).eval(...)
+      - pattern: $M.getEngineByName(...).eval(...)
+      - pattern: (ScriptEngine $E).eval(...)
+      - pattern-regex: \bmkToolBox\(
+  - id: fabrica.scala.hardcoded-secret
+    languages: [scala]
+    severity: ERROR
+    message: A credential (private key, AKIA access key, GitHub, Slack or Stripe token) is hard-coded in the source. Read it from the environment.
+    pattern-either:
+      - pattern-regex: -----BEGIN (RSA |EC |DSA |OPENSSH |ENCRYPTED )?PRIVATE KEY-----
+      - pattern-regex: \b(AKIA|ASIA)[0-9A-Z]{16}\b
+      - pattern-regex: \bgh[pousr]_[A-Za-z0-9]{36}\b
+      - pattern-regex: \bxox[baprs]-[A-Za-z0-9-]{10,}\b
+      - pattern-regex: \bsk_live_[A-Za-z0-9]{24,}\b

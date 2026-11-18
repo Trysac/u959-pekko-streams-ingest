@@ -1,6 +1,6 @@
 package io.github.trysac.pekko_streams_ingest
 
-/** Tests of the public API. */
+/** Tests of the template text helpers. */
 class TextSuite extends munit.FunSuite {
 
   for ((input, want) <- Seq("  Hello World " -> "hello world", "ABC" -> "abc", "\tx\n" -> "x"))

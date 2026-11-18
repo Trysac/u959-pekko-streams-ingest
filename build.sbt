@@ -35,6 +35,8 @@ lazy val root = (project in file("."))
     libraryDependencies ++= Seq(
       "org.scalameta" %% "munit" % "1.3.6" % Test,
       "org.scalameta" %% "munit-scalacheck" % "1.3.1" % Test,
+      "org.apache.pekko" %% "pekko-stream" % "2.0.0",
+      "org.apache.pekko" %% "pekko-stream-testkit" % "2.0.0" % Test,
     ),
     Test / testOptions ++= {
       if (ciTier) Nil

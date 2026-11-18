@@ -1,4 +1,4 @@
 package io.github.trysac.pekko_streams_ingest
 
-/** The input is empty or holds only whitespace; the message is `input is blank`. */
+/** Thrown when a text helper receives only whitespace. */
 final class BlankInputException extends IllegalArgumentException("input is blank")

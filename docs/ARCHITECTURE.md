@@ -1,30 +1,22 @@
 # Architecture
 
-## Purpose
+## Overview
 
-`io.github.trysac:pekko-streams-ingest` is a small, dependency-free Scala 3 library: Line-oriented file ingestion on Pekko Streams with backpressure from a slow sink, byte-bounded batches, a dead-letter channel and resumable offset checkpoints
+`io.github.trysac.pekko_streams_ingest` implements a single-pass, demand-driven line ingestion pipeline built on Apache Pekko Streams 2.0.0 (`org.apache.pekko:pekko-stream_3`).
 
-## Shape
+## Pipeline Stages
 
-```text
-caller code --> package io.github.trysac.pekko_streams_ingest (src/main/scala)
-                    |
-                    +-- objects and functions that are pure; no I/O, no global mutable state
-                    +-- private helpers (optional)
-```
+1. **Byte Source (`FileIO.fromPath` or `Source[ByteString, ?]`)**:
+   Reads `chunkSize`-byte chunks starting at the offset loaded from `CheckpointStore`. If the stored offset is negative or greater than the file size, the run fails immediately with `IngestException` (`checkpoint_mismatch`). If the offset equals the file size, the run completes immediately with an empty `IngestReport` at `endOffset = startOffset`.
 
-- **Public API**: every public declaration of the package. `private` and `private[pekko_streams_ingest]`
-  declarations may change without a major version.
-- **Errors**: invalid input throws an `IllegalArgumentException` subclass of the library (such as
-  `BlankInputException`) documented with `@throws`. The library never prints or exits.
-- **Side effects**: none. If a feature needs I/O, accept an `InputStream`, a `Reader` or a small
-  trait instead of opening resources, and record the choice in an ADR.
+2. **Line Framing (`LineFramingStage`)**:
+   Frames incoming chunks on `\n`, strips an optional trailing `\r` (supporting both LF and CRLF files), and emits the final line even if it has no trailing newline. Each framed line tracks its exact byte length (including delimiter bytes) and its exact `endOffset`. Lines whose payload exceeds `maxLineBytes` fail the stage immediately with `IngestException` (`line_too_long`) and the 1-based line number.
 
-## Quality contract
+3. **UTF-8 Decoding, Parsing & Error Budget (`ParseAndBudgetStage`)**:
+   Decodes each framed line with a strict `UTF-8` `CharsetDecoder` (`CodingErrorAction.REPORT`). Malformed byte sequences or `Left(reason)` results from `LineParser.parse` are routed to the `deadLetter` callback as `Rejected(lineNumber, reason, prefix)` where both `reason` and `prefix` are capped at 200 characters. When rejected lines exceed `maxErrors`, the stage fails with `IngestException` (`too_many_errors`).
 
-`scripts/Check.java` is the single definition of the gates; `fabrica.json` tells the factory and CI
-how to run it. See [TESTING.md](TESTING.md).
+4. **Byte- and Count-Weighted Batching (`WeightedBatchStage`)**:
+   Accumulates parsed records into `Batch[A]` values that never exceed `batchMaxRecords` or `batchMaxBytes` (except when a single record exceeds `batchMaxBytes`, in which case it forms a single-record batch of its own). Line numbers are 1-based relative to the starting checkpoint offset.
 
-## Decisions
-
-Architecture decisions are recorded in [decisions/](decisions/) as numbered ADRs.
+5. **Ordered Concurrent Sink Writes & Checkpointing**:
+   `mapAsync(config.parallelism)(sink.write)` executes up to `parallelism` batch writes concurrently while emitting completed batches downstream strictly in file order. Downstream `runFold` commits `checkpoint.save(batch.endOffset)` and emits `BatchCommitted` before advancing, guaranteeing that a crash or sink failure leaves the checkpoint at the last contiguous committed batch.

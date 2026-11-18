@@ -3,7 +3,7 @@
 // Format: scalafmt (the version .scalafmt.conf pins).
 addSbtPlugin("org.scalameta" % "sbt-scalafmt" % "2.6.2")
 // Lint: scalafix with the rules of .scalafix.conf.
-addSbtPlugin("ch.epfl.scala" % "sbt-scalafix" % "0.14.9")
+addSbtPlugin("ch.epfl.scala" % "sbt-scalafix" % "0.14.10")
 // Coverage: scoverage (the Scala 3 compiler's own instrumentation).
 addSbtPlugin("org.scoverage" % "sbt-scoverage" % "2.4.4")
 // Lockfile: build.sbt.lock records every resolved artifact; the lint gate fails when it is stale.

@@ -1,35 +1,16 @@
 # Testing
 
-## Running
+## Test Suites
 
-```sh
-sbt test                  # munit suites and ScalaCheck properties
-java scripts/Check.java   # every gate, as CI and the factory run it
-```
-
-## Policy
-
-- Statement coverage of the library (measured by scoverage) must stay at or above 80 %; the gate
-  fails below it.
-- Tests exercise the public API. They assert every observable effect: returned values, thrown
-  exceptions (`intercept[T]`) and their messages.
-- Property tests (`property(...)` with `forAll` in a `munit.ScalaCheckSuite`) state invariants such
-  as idempotence or round trips.
-- Each bug fix starts with a failing test that reproduces it.
-- Tests are deterministic: no network, no wall clock, no dependence on test order.
-
-## Tiers
-
-- Local tier (every gate run, coverage measured here): unit and property tests, plus conformance
-  on small fixtures kept in the repository.
-- CI tier: conformance that needs an external tool or a download. Tag the test with
-  `test("name".tag(Conformance))`, where `val Conformance = new munit.Tag("conformance")`; the test
-  task excludes the tag unless `FABRICA_CI=1`, while the lint gate always compiles it. The CI
-  `conformance` job sets `FABRICA_CI=1` and runs the full suite. Tools are installed by the
-  optional `ci/conformance-setup.sh` (bash, CI only; verify every download against a pinned
-  SHA-256), and tests skip cleanly (`assume(...)`) when their tool is missing.
-
-## Layout
-
-Tests live in `src/test/scala/` in the library's package, one `*Suite.scala` class per area.
-Fixtures and golden files go in `src/test/resources/fixtures/`.
+- **IngestSuite**: Covers acceptance, backpressure, checkpointing, and error handling.
+  - Criterion 1: 3-line file ingestion and report generation.
+  - Criterion 2: Backpressure verification on large streams with stalled sinks.
+  - Criterion 3: Batch sizing invariants (maxRecords, maxBytes), single-record batch behavior, and ordered commits with `parallelism` > 1.
+  - Criterion 4: Sink failure during batch 3 of 10 and subsequent resume.
+  - Criterion 5: Dead-letter routing of rejected lines and `too_many_errors` threshold enforcement.
+  - Criterion 6: Error code validation ('line_too_long', 'checkpoint_mismatch', 'invalid_config') and unterminated final line handling.
+  - Criterion 7: Event emission (`BatchCommitted`, `RunFinished`) ensuring no sensitive data is leaked.
+  - Edge Cases: Empty files, blank lines, CRLF, multi-byte UTF-8 character splitting, malformed UTF-8, and resume at EOF.
+- **TextPropertiesSuite**: Property-based tests for `Text.normalize` (idempotency, case sensitivity) and `IngestConfig.validated` (parameter bounds validation).
+- **TextSuite**: Basic unit tests for `Text.normalize` and `BlankInputException`.
+- **CI Conformance**: Verifies 10 GiB stream handling with bounded memory.

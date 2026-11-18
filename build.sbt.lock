@@ -1,6 +1,6 @@
 {
   "lockVersion" : 1,
-  "timestamp" : "2026-11-17T06:49:57.215833746Z",
+  "timestamp" : "2026-11-17T22:37:51.293837434Z",
   "configurations" : [
     "compile",
     "optional",
@@ -11,6 +11,22 @@
   ],
   "dependencies" : [
     {
+      "org" : "com.typesafe",
+      "name" : "config",
+      "version" : "1.4.9",
+      "artifacts" : [
+        {
+          "name" : "config.jar",
+          "hash" : "sha1:fc87584fea1adcf5df899e58501a470329e59b52"
+        }
+      ],
+      "configurations" : [
+        "compile",
+        "runtime",
+        "test"
+      ]
+    },
+    {
       "org" : "junit",
       "name" : "junit",
       "version" : "4.13.2",
@@ -18,6 +34,82 @@
         {
           "name" : "junit.jar",
           "hash" : "sha1:8ac9e16d933b6fb43bc7f576336b8f4d7eb5ba12"
+        }
+      ],
+      "configurations" : [
+        "test"
+      ]
+    },
+    {
+      "org" : "org.apache.pekko",
+      "name" : "pekko-actor_3",
+      "version" : "2.0.0",
+      "artifacts" : [
+        {
+          "name" : "pekko-actor_3.jar",
+          "hash" : "sha1:de5192d910ba4b9dcdc27cfd8eeb1ecac701dc7a"
+        }
+      ],
+      "configurations" : [
+        "compile",
+        "runtime",
+        "test"
+      ]
+    },
+    {
+      "org" : "org.apache.pekko",
+      "name" : "pekko-protobuf-v3_3",
+      "version" : "2.0.0",
+      "artifacts" : [
+        {
+          "name" : "pekko-protobuf-v3_3.jar",
+          "hash" : "sha1:92e930a3c5e5ea5f638137cb77513d18a74aec19"
+        }
+      ],
+      "configurations" : [
+        "compile",
+        "runtime",
+        "test"
+      ]
+    },
+    {
+      "org" : "org.apache.pekko",
+      "name" : "pekko-stream-testkit_3",
+      "version" : "2.0.0",
+      "artifacts" : [
+        {
+          "name" : "pekko-stream-testkit_3.jar",
+          "hash" : "sha1:da37e61f2100087ab2aabad819ba4502ef43ee80"
+        }
+      ],
+      "configurations" : [
+        "test"
+      ]
+    },
+    {
+      "org" : "org.apache.pekko",
+      "name" : "pekko-stream_3",
+      "version" : "2.0.0",
+      "artifacts" : [
+        {
+          "name" : "pekko-stream_3.jar",
+          "hash" : "sha1:86d9f9d7178d4b152b00bc3f5e062539664954cf"
+        }
+      ],
+      "configurations" : [
+        "compile",
+        "runtime",
+        "test"
+      ]
+    },
+    {
+      "org" : "org.apache.pekko",
+      "name" : "pekko-testkit_3",
+      "version" : "2.0.0",
+      "artifacts" : [
+        {
+          "name" : "pekko-testkit_3.jar",
+          "hash" : "sha1:3281b515f0825560f18b749596727c3bf2552307"
         }
       ],
       "configurations" : [
@@ -49,6 +141,22 @@
         }
       ],
       "configurations" : [
+        "test"
+      ]
+    },
+    {
+      "org" : "org.reactivestreams",
+      "name" : "reactive-streams",
+      "version" : "1.0.4",
+      "artifacts" : [
+        {
+          "name" : "reactive-streams.jar",
+          "hash" : "sha1:3864a1320d97d7b045f729a326e1e077661f31b7"
+        }
+      ],
+      "configurations" : [
+        "compile",
+        "runtime",
         "test"
       ]
     },

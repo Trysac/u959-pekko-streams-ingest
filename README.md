@@ -1,47 +1,45 @@
 # pekko-streams-ingest
 
-[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![CI](https://github.com/Trysac/u959-pekko-streams-ingest/actions/workflows/ci.yml/badge.svg)](https://github.com/Trysac/u959-pekko-streams-ingest/actions/workflows/ci.yml)
-
-Line-oriented file ingestion on Pekko Streams with backpressure from a slow sink, byte-bounded batches, a dead-letter channel and resumable offset checkpoints
+Line-oriented file ingestion on Apache Pekko Streams with backpressure from a slow sink, byte-bounded batches, a dead-letter channel and resumable offset checkpoints.
 
 ## Problem
 
-Describe in two or three sentences the concrete problem this utility solves, who hits it, and what
-they do today without it. Replace this paragraph when the first real feature lands.
+Loading multi-gigabyte line files into a slower store with a read-everything loop either exhausts the heap or floods the store, and a crash halfway forces the whole file to be reloaded. Pekko Streams provides demand-driven backpressure, but framing, byte-bounded batching, error budgets and safe checkpoints still have to be assembled correctly each time. This library packages that pipeline so memory stays bounded by configuration, not by file size, and a restart resumes after the last committed batch.
 
-## Install
+## Installation
 
-Maven coordinates `io.github.trysac:pekko-streams-ingest_3` (Scala 3). Until it is published to Maven
-Central, build it from a release tag through JitPack (`https://jitpack.io`), then declare in
-`build.sbt`:
+Add the dependency to your `build.sbt`:
 
 ```scala
 libraryDependencies += "io.github.trysac" %% "pekko-streams-ingest" % "0.1.0"
 ```
 
-Requires Scala 3.9 or newer and Java 21 or newer. No dependencies outside the Scala standard
-library.
-
 ## Usage
 
 ```scala
-import io.github.trysac.pekko_streams_ingest.Text
+import io.github.trysac.pekko_streams_ingest.*
+import java.nio.file.Path
+import org.apache.pekko.actor.ActorSystem
+import org.apache.pekko.stream.Materializer
+import scala.concurrent.Future
 
-// normalize trims surrounding whitespace and lower-cases the text.
-val name = Text.normalize("  Hello World ") // "hello world"
-
-// Blank input is rejected explicitly instead of returning an empty string.
-Text.normalize("   ") // throws BlankInputException ("input is blank")
+given system: ActorSystem = ActorSystem("ingest")
+given Materializer = Materializer(system)
+val sink = BatchSink.instance[String](_ => Future.successful(()))
+val reportF = Ingest.file(Path.of("data.log"), LineParser.identity, sink)
 ```
 
-## Documentation
+## Public API
 
-- [Architecture](docs/ARCHITECTURE.md) and [decisions](docs/decisions/)
-- [Testing](docs/TESTING.md) and [security](docs/SECURITY.md)
-- [Project record](docs/PROJECT.md) and [stack](docs/STACK.md)
-- [Changelog](CHANGELOG.md) and [contributing guide](CONTRIBUTING.md)
+- `IngestConfig`: validated bounds (`chunkSize`, `maxLineBytes`, `batchMaxRecords`, `batchMaxBytes`, `parallelism`, `maxErrors`). Throws `IngestException` ('invalid_config') if parameters are < 1.
+- `LineParser[A]`: parses a decoded UTF-8 line and its 1-based line number into `Either[String, A]`.
+- `Batch[A]`: carries `index`, `records`, `firstLine`, `lastLine`, `endOffset` and `bytes`.
+- `BatchSink[A]`: writes a `Batch[A]` asynchronously (`Future[Unit]`).
+- `CheckpointStore`: `InMemoryCheckpointStore` and atomic `FileCheckpointStore(path)`. Provides `load()` and `save(offset)`.
+- `Ingest.file` and `Ingest.source`: run the bounded pipeline and return `Future[IngestReport]`. May fail with `IngestException` ('checkpoint_mismatch', 'io_error', 'line_too_long', 'too_many_errors', 'sink_failed').
 
-## License
+## Why not existing alternatives?
 
-[MIT](LICENSE) (c) 2026 Miguel Gomez
+Existing Alpakka file connectors lack built-in byte-weighted batching, ordered resilient checkpointing, and configurable dead-letter error budgets, requiring manual and error-prone implementation of these concerns. This library provides a unified, tested, and memory-bounded pipeline for these specific requirements.
+
+See [docs/SECURITY.md](docs/SECURITY.md) for threat model and limits.

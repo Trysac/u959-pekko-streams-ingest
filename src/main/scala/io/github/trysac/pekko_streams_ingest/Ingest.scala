@@ -5,7 +5,7 @@ import org.apache.pekko.stream.{Attributes, Materializer}
 import org.apache.pekko.util.ByteString
 
 import java.nio.ByteBuffer
-import java.nio.charset.{CharacterCodingException, CodingErrorAction, StandardCharsets}
+import java.nio.charset.{CodingErrorAction, StandardCharsets}
 import java.nio.file.{Files, Path}
 import scala.annotation.tailrec
 import scala.concurrent.{ExecutionContext, Future}
@@ -326,11 +326,25 @@ object Ingest {
       .newDecoder()
       .onMalformedInput(CodingErrorAction.REPORT)
       .onUnmappableCharacter(CodingErrorAction.REPORT)
-    try {
-      Right(decoder.decode(bytes.asByteBuffer).toString)
-    } catch {
-      case e: CharacterCodingException =>
-        Left(s"Malformed UTF-8 sequence: ${Option(e.getMessage).getOrElse("invalid bytes")}")
+    val byteBuf = bytes.asByteBuffer
+    val charBuf = java.nio.CharBuffer.allocate(byteBuf.remaining())
+    val result = decoder.decode(byteBuf, charBuf, true)
+    if (result.isError) {
+      Left(s"Malformed UTF-8 sequence: ${result.toString}")
+    } else {
+      val flushResult = decoder.flush(charBuf)
+      if (flushResult.isError) {
+        Left(s"Malformed UTF-8 sequence: ${flushResult.toString}")
+      } else {
+        charBuf.flip()
+        Right(
+          new String(
+            charBuf.array(),
+            charBuf.arrayOffset() + charBuf.position(),
+            charBuf.remaining(),
+          ),
+        )
+      }
     }
   }
 

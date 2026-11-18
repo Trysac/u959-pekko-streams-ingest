@@ -18,6 +18,10 @@ import scala.jdk.CollectionConverters.*
 /** Acceptance, edge-case, backpressure, checkpoint and conformance suites for [[Ingest]]. */
 class IngestSuite extends munit.FunSuite {
 
+  // munit's default is 30 seconds per test; the 10 GiB conformance test needs minutes, and longer
+  // under the coverage instrumentation of the CI tier. Every other test finishes in seconds.
+  override val munitTimeout: Duration = 40.minutes
+
   private val system: ActorSystem = ActorSystem("IngestSuite")
   private given Materializer = Materializer(system)
 
@@ -648,7 +652,7 @@ class IngestSuite extends munit.FunSuite {
 
     val report = Await.result(
       Ingest.source(source, 0L, LineParser.identity, sink, IngestConfig()),
-      10.minutes,
+      35.minutes,
     )
     assertEquals(report.bytes, 10_737_418_240L)
     assertEquals(report.endOffset, 10_737_418_240L)

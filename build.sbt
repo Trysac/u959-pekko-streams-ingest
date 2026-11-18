@@ -4,7 +4,7 @@
 
 ThisBuild / organization := "io.github.trysac"
 ThisBuild / version := "0.1.0"
-ThisBuild / scalaVersion := "3.9.0"
+ThisBuild / scalaVersion := "3.10.1"
 // scalafix reads the SemanticDB the compiler writes.
 ThisBuild / semanticdbEnabled := true
 
